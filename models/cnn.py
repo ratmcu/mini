@@ -51,7 +51,22 @@ class ConvNet(nn.Module):
                     print ('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}' 
                            .format(epoch+1, self.num_epochs, i+1, total_step, loss.item()))
                     
+    def train_a_batch(self, images, labels):
+        # Reshape images to (batch_size, input_size)
+        images = images.view(-1, 1, 28, 28)
 
+        # Forward pass
+        if torch.cuda.is_available():
+            images = images.cuda()
+            labels = labels.cuda()
+        outputs = self(images)
+        loss = self.criterion(outputs, labels)
+
+        # Backward and optimize
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+    
     def test(self, test_loader):
         correct = 0
         total = 0
@@ -74,7 +89,7 @@ class ConvNet(nn.Module):
             return 100 * correct / total
             
     def convert_to_one_hot_labels(self, input, target):
-        tmp = input.new(target.size(0), target.max() + 1).fill_(-1)
+        tmp = input.new(target.size(0), 10).fill_(-1)
         tmp.scatter_(1, target.view(-1, 1), 1.0)
         return tmp
         
